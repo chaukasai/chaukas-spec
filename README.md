@@ -43,7 +43,7 @@ pip install chaukas-spec-server
 
 ### For Go Development
 ```bash
-go get github.com/chaukasai/spec
+go get github.com/chaukasai/chaukas-spec
 ```
 
 ## Python Usage
@@ -85,7 +85,7 @@ class MyChaukasServer(ChaukasServerServiceServicer):
 
 ```go
 import (
-    serverv1 "github.com/chaukasai/spec/chaukas/spec/server/v1"
+    serverv1 "github.com/chaukasai/chaukas-spec/chaukas/spec/server/v1"
 )
 
 type MyChaukasServer struct {
@@ -138,7 +138,7 @@ make breaking       # Check for breaking changes against main
 
 ## CI/CD Pipeline
 
-[![CI](https://github.com/chaukasai/spec/workflows/CI/badge.svg)](https://github.com/chaukasai/spec/actions)
+[![CI](https://github.com/chaukasai/chaukas-spec/workflows/CI/badge.svg)](https://github.com/chaukasai/chaukas-spec/actions)
 
 The repository includes a comprehensive CI/CD pipeline that:
 

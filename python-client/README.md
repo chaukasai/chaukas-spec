@@ -172,7 +172,7 @@ except grpc.RpcError as e:
 
 This package contains generated Protocol Buffer code. For development instructions and to contribute to the specification, see the main repository:
 
-https://github.com/chaukasai/spec
+https://github.com/chaukasai/chaukas-spec
 
 ## License
 

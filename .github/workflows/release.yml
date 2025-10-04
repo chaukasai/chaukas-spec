@@ -100,7 +100,7 @@ jobs:
             echo
             echo "**For Go Development:**"
             echo '```bash'
-            echo "go get github.com/chaukasai/spec@v${{ steps.version.outputs.VERSION }}"
+            echo "go get github.com/chaukasai/chaukas-spec@v${{ steps.version.outputs.VERSION }}"
             echo '```'
             echo
             echo "## Changes in ${{ github.ref_name }}"
@@ -130,7 +130,7 @@ jobs:
         run: |
           # Go modules are automatically published via Git tags
           # Verify the module can be fetched
-          GOPROXY=direct go list -m github.com/chaukasai/spec@v${{ steps.version.outputs.VERSION }}
+          GOPROXY=direct go list -m github.com/chaukasai/chaukas-spec@v${{ steps.version.outputs.VERSION }}
           echo "✅ Go module published successfully"
 
       - name: Prepare distribution artifacts

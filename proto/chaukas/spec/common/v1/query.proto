@@ -13,7 +13,7 @@ package chaukas.spec.common.v1;
 import "chaukas/spec/common/v1/events.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/chaukasai/spec/chaukas/spec/common/v1;v1";
+option go_package = "github.com/chaukasai/chaukas-spec/chaukas/spec/common/v1;v1";
 
 enum SortOrder {
   SORT_ORDER_UNSPECIFIED = 0;

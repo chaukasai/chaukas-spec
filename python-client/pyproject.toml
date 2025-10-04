@@ -31,10 +31,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/chaukasai/spec"
-Repository = "https://github.com/chaukasai/spec"
-Issues = "https://github.com/chaukasai/spec/issues"
-Documentation = "https://github.com/chaukasai/spec#client-side-sdk-development"
+Homepage = "https://github.com/chaukasai/chaukas-spec"
+Repository = "https://github.com/chaukasai/chaukas-spec"
+Issues = "https://github.com/chaukasai/chaukas-spec/issues"
+Documentation = "https://github.com/chaukasai/chaukas-spec#client-side-sdk-development"
 
 [tool.setuptools.packages.find]
 where = ["."]

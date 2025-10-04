@@ -13,7 +13,7 @@ package chaukas.spec.client.v1;
 import "chaukas/spec/common/v1/events.proto";
 import "chaukas/spec/common/v1/query.proto";
 
-option go_package = "github.com/chaukasai/spec/chaukas/spec/client/v1;v1";
+option go_package = "github.com/chaukasai/chaukas-spec/chaukas/spec/client/v1;v1";
 
 // Client-side Chaukas service for SDK integration
 service ChaukasClientService {

@@ -14,7 +14,7 @@ import "google/protobuf/any.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/chaukasai/spec/chaukas/spec/common/v1;v1";
+option go_package = "github.com/chaukasai/chaukas-spec/chaukas/spec/common/v1;v1";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enums

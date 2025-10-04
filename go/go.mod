@@ -1,4 +1,4 @@
-module github.com/chaukasai/spec
+module github.com/chaukasai/chaukas-spec
 
 go 1.23.0
 
