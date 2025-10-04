@@ -1,0 +1,46 @@
+name: Branch Naming Convention
+permissions:
+  contents: read
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore:
+      - main
+      - develop
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming convention
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+
+          # Define allowed pattern
+          PATTERN='^(feature|fix|bugfix|hotfix|release|docs|chore)/[a-z0-9][a-z0-9-]*[a-z0-9]$'
+
+          # Check if main/develop
+          if [[ "$BRANCH_NAME" == "main" || "$BRANCH_NAME" == "develop" ]]; then
+            echo "✅ Protected branch: $BRANCH_NAME"
+            exit 0
+          fi
+
+          # Check pattern
+          if [[ ! "$BRANCH_NAME" =~ $PATTERN ]]; then
+            echo "❌ Branch name '$BRANCH_NAME' does not match required pattern"
+            echo ""
+            echo "Required pattern: (feature|fix|bugfix|hotfix|release|docs|chore)/lowercase-with-dashes"
+            echo ""
+            echo "Valid examples:"
+            echo "  - feature/add-mcp-support"
+            echo "  - fix/cache-warning"
+            echo "  - bugfix/issue-123"
+            echo "  - hotfix/critical-security"
+            echo "  - release/v1.0.0"
+            echo "  - docs/update-readme"
+            echo "  - chore/update-deps"
+            exit 1
+          fi
+
+          echo "✅ Branch name '$BRANCH_NAME' is valid"
