@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: Chaukas Public API
+  version: 1.0.3
+servers:
+  - url: https://api.example.com
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: OK
+
+  /v1/capabilities:
+    get:
+      summary: Feature flags supported by the backend
+      responses:
+        '200':
+          description: Capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+
+  /v1/events:
+    post:
+      summary: Ingest a single event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/events/batch:
+    post:
+      summary: Ingest a batch of events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventBatch'
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/query:
+    post:
+      summary: Query events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+
+components:
+  schemas:
+
+    # ── Core enums (as strings for JSON) ──────────────────────────────────────
+    EventType:
+      type: string
+      enum: [SESSION_START, SESSION_END, AGENT_START, AGENT_END, AGENT_HANDOFF, MODEL_INVOCATION_START, MODEL_INVOCATION_END, TOOL_CALL_START, TOOL_CALL_END, MCP_CALL_START, MCP_CALL_END, INPUT_RECEIVED, OUTPUT_EMITTED, ERROR, RETRY, POLICY_DECISION, DATA_ACCESS, STATE_UPDATE, SYSTEM]
+    EventStatus:
+      type: string
+      enum: [STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+    Severity:
+      type: string
+      enum: [DEBUG, INFO, WARN, ERROR]
+    Author:
+      type: string
+      enum: [USER, AGENT, TOOL, SYSTEM, LLM]
+
+    # ── Content union (discriminated) ────────────────────────────────────────
+    MessageContent:
+      type: object
+      properties:
+        kind: { type: string, enum: ["message"] }
+        role: { type: string }
+        text: { type: string }
+        metadata: { type: object, additionalProperties: true }
+      required: [kind, text]
+    ToolCall:
+      type: object
+      properties:
+        kind: { type: string, enum: ["tool_call"] }
+        id:   { type: string }
+        name: { type: string }
+        arguments: { type: object, additionalProperties: true }
+        auth_required: { type: boolean }
+        function_name: { type: string }
+      required: [kind, name]
+    ToolResponse:
+      type: object
+      properties:
+        kind: { type: string, enum: ["tool_response"] }
+        tool_call_id: { type: string }
+        output: { type: object, additionalProperties: true }
+        error_message: { type: string }
+        execution_time_ms: { type: number }
+        http_status: { type: integer }
+      required: [kind, tool_call_id]
+    LLMInvocation:
+      type: object
+      properties:
+        kind: { type: string, enum: ["llm_invocation"] }
+        provider: { type: string }
+        model: { type: string }
+        request: { type: object, additionalProperties: true }
+        response: { type: object, additionalProperties: true }
+        prompt_tokens: { type: integer }
+        completion_tokens: { type: integer }
+        total_tokens: { type: integer }
+        temperature: { type: number }
+        max_tokens: { type: integer }
+        top_p: { type: number }
+        frequency_penalty: { type: number }
+        presence_penalty: { type: number }
+        start_time: { type: string, format: date-time }
+        end_time: { type: string, format: date-time }
+        duration_ms: { type: number }
+        finish_reason: { type: string }
+      required: [kind, provider, model]
+    PolicyDecision:
+      type: object
+      properties:
+        kind: { type: string, enum: ["policy_decision"] }
+        policy_id: { type: string }
+        outcome: { type: string, enum: ["allow","deny","review"] }
+        rule_ids: { type: array, items: { type: string } }
+        rationale: { type: string }
+      required: [kind, policy_id, outcome]
+    DataAccess:
+      type: object
+      properties:
+        kind: { type: string, enum: ["data_access"] }
+        datasource: { type: string }
+        document_ids: { type: array, items: { type: string } }
+        chunk_ids: { type: array, items: { type: string } }
+        pii_categories: { type: array, items: { type: string } }
+      required: [kind, datasource]
+    ErrorInfo:
+      type: object
+      properties:
+        kind: { type: string, enum: ["error_info"] }
+        error_message: { type: string }
+        error_code: { type: string }
+        stack_trace: { type: string }
+        recoverable: { type: boolean }
+        recovery_action: { type: string }
+      required: [kind, error_message]
+    AgentHandoff:
+      type: object
+      properties:
+        kind: { type: string, enum: ["agent_handoff"] }
+        from_agent_id: { type: string }
+        from_agent_name: { type: string }
+        to_agent_id: { type: string }
+        to_agent_name: { type: string }
+        handoff_data: { type: object, additionalProperties: true }
+        reason: { type: string }
+        handoff_type: { type: string, enum: ["sequential", "parallel", "conditional"] }
+      required: [kind, from_agent_id, to_agent_id]
+    MCPCall:
+      type: object
+      properties:
+        kind: { type: string, enum: ["mcp_call"] }
+        server_name: { type: string }
+        server_url: { type: string }
+        operation: { type: string }
+        method: { type: string }
+        request: { type: object, additionalProperties: true }
+        response: { type: object, additionalProperties: true }
+        protocol_version: { type: string }
+        execution_time_ms: { type: number }
+      required: [kind, server_name, operation]
+    RedactionInfo:
+      type: object
+      properties:
+        fields: { type: array, items: { type: string } }
+        method: { type: string, enum: ["mask","hash","drop"] }
+        salt_id: { type: string }
+
+    EventContent:
+      oneOf:
+        - $ref: '#/components/schemas/MessageContent'
+        - $ref: '#/components/schemas/ToolCall'
+        - $ref: '#/components/schemas/ToolResponse'
+        - $ref: '#/components/schemas/LLMInvocation'
+        - $ref: '#/components/schemas/PolicyDecision'
+        - $ref: '#/components/schemas/DataAccess'
+        - $ref: '#/components/schemas/ErrorInfo'
+        - $ref: '#/components/schemas/AgentHandoff'
+        - $ref: '#/components/schemas/MCPCall'
+      discriminator:
+        propertyName: kind
+        mapping:
+          message: '#/components/schemas/MessageContent'
+          tool_call: '#/components/schemas/ToolCall'
+          tool_response: '#/components/schemas/ToolResponse'
+          llm_invocation: '#/components/schemas/LLMInvocation'
+          policy_decision: '#/components/schemas/PolicyDecision'
+          data_access: '#/components/schemas/DataAccess'
+          error_info: '#/components/schemas/ErrorInfo'
+          agent_handoff: '#/components/schemas/AgentHandoff'
+          mcp_call: '#/components/schemas/MCPCall'
+
+    Event:
+      type: object
+      properties:
+        event_id: { type: string }
+        tenant_id: { type: string }
+        project_id: { type: string }
+        session_id: { type: string }
+        span_id: { type: string }
+        parent_span_id: { type: string }
+        type: { $ref: '#/components/schemas/EventType' }
+        severity: { $ref: '#/components/schemas/Severity' }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        author: { $ref: '#/components/schemas/Author' }
+        timestamp: { type: string, format: date-time }
+        agent_id: { type: string }
+        agent_name: { type: string }
+        invocation_id: { type: string }
+        response_id: { type: string }
+        is_partial: { type: boolean }
+        is_final: { type: boolean }
+        hash_prev: { type: string }
+        content_hash: { type: string }
+        worm_proof_id: { type: string }
+        branch: { type: string }
+        tags: { type: array, items: { type: string } }
+        trace_id: { type: string }
+        content: { $ref: '#/components/schemas/EventContent' }
+        retry:
+          type: object
+          properties:
+            attempt: { type: integer }
+            strategy: { type: string }
+            backoff_ms: { type: integer }
+        redaction: { $ref: '#/components/schemas/RedactionInfo' }
+        pii_categories: { type: array, items: { type: string } }
+        performance:
+          type: object
+          properties:
+            cpu_percent: { type: number }
+            memory_mb: { type: number }
+            duration_ms: { type: number }
+            throughput: { type: number }
+            latency_ms: { type: number }
+        infrastructure:
+          type: object
+          properties:
+            resource_type: { type: string }
+            metrics: { type: object, additionalProperties: true }
+            host: { type: string }
+            process_id: { type: integer }
+            thread_id: { type: string }
+        cost:
+          type: object
+          properties:
+            provider: { type: string }
+            service:  { type: string }
+            input_tokens: { type: integer }
+            output_tokens: { type: integer }
+            total_tokens: { type: integer }
+            input_cost: { type: number }
+            output_cost: { type: number }
+            total_cost: { type: number }
+            currency: { type: string }
+            input_rate_per_token: { type: number }
+            output_rate_per_token: { type: number }
+        metadata: { type: object, additionalProperties: true }
+      required: [event_id, type, status, timestamp, session_id]
+
+    EventBatch:
+      type: object
+      properties:
+        batch_id: { type: string }
+        timestamp: { type: string, format: date-time }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/Event' }
+        metadata: { type: object, additionalProperties: true }
+        total_cost: { type: number }
+        total_tokens: { type: integer }
+        total_duration_ms: { type: number }
+      required: [events]
+
+    TimeRange:
+      type: object
+      properties:
+        start: { type: string, format: date-time }
+        end:   { type: string, format: date-time }
+
+    QueryFilter:
+      type: object
+      properties:
+        tenant_id: { type: string }
+        project_id: { type: string }
+        session_id: { type: string }
+        agent_id: { type: string }
+        span_id: { type: string }
+        trace_id: { type: string }
+        types:
+          type: array
+          items: { $ref: '#/components/schemas/EventType' }
+        statuses:
+          type: array
+          items: { $ref: '#/components/schemas/EventStatus' }
+        severities:
+          type: array
+          items: { $ref: '#/components/schemas/Severity' }
+        tags:
+          type: array
+          items: { type: string }
+        text_query: { type: string }
+        time: { $ref: '#/components/schemas/TimeRange' }
+
+    QueryRequest:
+      type: object
+      properties:
+        filter: { $ref: '#/components/schemas/QueryFilter' }
+        page_size: { type: integer, default: 100, maximum: 1000 }
+        page_token: { type: string }
+        order_by_time:
+          type: string
+          enum: [ASC, DESC]
+          default: DESC
+      required: [filter]
+
+    QueryResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/Event' }
+        next_page_token: { type: string }
+
+    Capabilities:
+      type: object
+      properties:
+        worm_retention: { type: boolean }
+        audit_proofs: { type: boolean }
+        distributed_query: { type: boolean }
+        rbac: { type: boolean }
+        sso: { type: boolean }
+        policy_decisions: { type: boolean }
+        data_access_events: { type: boolean }

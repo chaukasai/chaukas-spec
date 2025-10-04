@@ -1,0 +1,72 @@
+// Copyright 2025 Chaukas AI
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+syntax = "proto3";
+
+package chaukas.spec.common.v1;
+
+import "chaukas/spec/common/v1/events.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chaukasai/spec/chaukas/spec/common/v1;v1";
+
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+}
+
+message TimeRange {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+}
+
+message QueryFilter {
+  string tenant_id = 1;
+  string project_id = 2;
+
+  // Optional scoping
+  string session_id = 3;
+  string agent_id = 4;
+  string span_id = 5;
+  string trace_id = 6; // Filter by distributed trace identifier
+
+  // Event fields
+  repeated EventType types = 10;
+  repeated EventStatus statuses = 11;
+  repeated Severity severities = 12;
+
+  // Tags & text
+  repeated string tags = 20;
+  string text_query = 21; // full-text (implementation-defined)
+
+  // Time
+  TimeRange time = 30;
+}
+
+message QueryRequest {
+  QueryFilter filter = 1;
+  int32 page_size = 2; // default 100, max e.g. 1000
+  string page_token = 3;
+  SortOrder order_by_time = 4; // default DESC
+}
+
+message QueryResponse {
+  repeated Event events = 1;
+  string next_page_token = 2;
+}
+
+message Capabilities {
+  bool worm_retention = 1;
+  bool audit_proofs = 2;
+  bool distributed_query = 3;
+  bool rbac = 4;
+  bool sso = 5;
+  bool policy_decisions = 6;
+  bool data_access_events = 7;
+}

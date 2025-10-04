@@ -1,0 +1,100 @@
+// Copyright 2025 Chaukas AI
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+syntax = "proto3";
+
+package chaukas.spec.server.v1;
+
+import "chaukas/spec/common/v1/events.proto";
+import "chaukas/spec/common/v1/query.proto";
+
+option go_package = "github.com/chaukasai/spec/chaukas/spec/server/v1;v1";
+
+// Server-side Chaukas service for platform implementation
+service ChaukasServerService {
+  // Health check endpoint
+  rpc Healthz(HealthzRequest) returns (HealthzResponse);
+
+  // Get supported capabilities
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+
+  // Ingest a single event
+  rpc IngestEvent(IngestEventRequest) returns (IngestEventResponse);
+
+  // Ingest a batch of events
+  rpc IngestEventBatch(IngestEventBatchRequest) returns (IngestEventBatchResponse);
+
+  // Query events
+  rpc QueryEvents(QueryEventsRequest) returns (QueryEventsResponse);
+
+  // Server-specific: Get event statistics
+  rpc GetEventStats(GetEventStatsRequest) returns (GetEventStatsResponse);
+}
+
+// Server-specific response types
+message IngestEventResponse {
+  string event_id = 1;
+  string status = 2;
+  int64 processed_at = 3;
+}
+
+message IngestEventBatchResponse {
+  string batch_id = 1;
+  int32 accepted_count = 2;
+  int32 rejected_count = 3;
+  repeated string rejected_event_ids = 4;
+}
+
+message GetEventStatsRequest {
+  string tenant_id = 1;
+  string project_id = 2;
+  chaukas.spec.common.v1.TimeRange time_range = 3;
+}
+
+message GetEventStatsResponse {
+  int64 total_events = 1;
+  int64 total_sessions = 2;
+  map<string, int64> events_by_type = 3;
+  double avg_session_duration_ms = 4;
+}
+
+// Additional request and response types for ChaukasServerService RPCs
+
+// Health check request
+message HealthzRequest {}
+
+// Health check response
+message HealthzResponse {}
+
+// Get capabilities request
+message GetCapabilitiesRequest {}
+
+// Get capabilities response
+message GetCapabilitiesResponse {
+  chaukas.spec.common.v1.Capabilities capabilities = 1;
+}
+
+// Ingest single event request
+message IngestEventRequest {
+  chaukas.spec.common.v1.Event event = 1;
+}
+
+// Ingest event batch request
+message IngestEventBatchRequest {
+  chaukas.spec.common.v1.EventBatch event_batch = 1;
+}
+
+// Query events request
+message QueryEventsRequest {
+  chaukas.spec.common.v1.QueryRequest query = 1;
+}
+
+// Query events response
+message QueryEventsResponse {
+  chaukas.spec.common.v1.QueryResponse response = 1;
+}

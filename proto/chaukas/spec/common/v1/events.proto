@@ -1,0 +1,296 @@
+// Copyright 2025 Chaukas AI
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+syntax = "proto3";
+
+package chaukas.spec.common.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chaukasai/spec/chaukas/spec/common/v1;v1";
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────────────────────────────────────
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+
+  // Session lifecycle
+  EVENT_TYPE_SESSION_START = 1;
+  EVENT_TYPE_SESSION_END = 2;
+
+  // Agent spans
+  EVENT_TYPE_AGENT_START = 10;
+  EVENT_TYPE_AGENT_END = 11;
+  EVENT_TYPE_AGENT_HANDOFF = 12;
+
+  // LLM/tool spans
+  EVENT_TYPE_MODEL_INVOCATION_START = 20;
+  EVENT_TYPE_MODEL_INVOCATION_END = 21;
+  EVENT_TYPE_TOOL_CALL_START = 22;
+  EVENT_TYPE_TOOL_CALL_END = 23;
+  EVENT_TYPE_MCP_CALL_START = 24;
+  EVENT_TYPE_MCP_CALL_END = 25;
+
+  // I/O
+  EVENT_TYPE_INPUT_RECEIVED = 30;
+  EVENT_TYPE_OUTPUT_EMITTED = 31;
+
+  // Cross-cutting
+  EVENT_TYPE_ERROR = 40;
+  EVENT_TYPE_RETRY = 41;
+
+  // Optional extension types (x_*)
+  EVENT_TYPE_POLICY_DECISION = 60; // x_POLICY_DECISION
+  EVENT_TYPE_DATA_ACCESS = 61; // x_DATA_ACCESS (RAG/retrieval)
+  EVENT_TYPE_STATE_UPDATE = 62;
+  EVENT_TYPE_SYSTEM = 63;
+}
+
+enum EventStatus {
+  EVENT_STATUS_UNSPECIFIED = 0;
+  EVENT_STATUS_STARTED = 1;
+  EVENT_STATUS_IN_PROGRESS = 2;
+  EVENT_STATUS_COMPLETED = 3;
+  EVENT_STATUS_FAILED = 4;
+  EVENT_STATUS_CANCELLED = 5;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_DEBUG = 1;
+  SEVERITY_INFO = 2;
+  SEVERITY_WARN = 3;
+  SEVERITY_ERROR = 4;
+}
+
+enum Author {
+  AUTHOR_UNSPECIFIED = 0;
+  AUTHOR_USER = 1;
+  AUTHOR_AGENT = 2;
+  AUTHOR_TOOL = 3;
+  AUTHOR_SYSTEM = 4;
+  AUTHOR_LLM = 5;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+/* Common embedded messages */
+// ──────────────────────────────────────────────────────────────────────────────
+
+message MessageContent {
+  string role = 1; // "user" | "assistant" | "system"
+  string text = 2;
+  google.protobuf.Struct metadata = 3;
+}
+
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Struct arguments = 3; // arbitrary JSON args
+  bool auth_required = 4;
+  string function_name = 5; // Specific function within the tool
+}
+
+message ToolResponse {
+  string tool_call_id = 1;
+  google.protobuf.Struct output = 2; // arbitrary JSON result
+  string error_message = 3;
+  double execution_time_ms = 4;
+  int32 http_status = 5; // if applicable
+}
+
+message LLMInvocation {
+  string provider = 1; // e.g., "openai"
+  string model = 2; // e.g., "gpt-4o-mini"
+  google.protobuf.Struct request = 3; // serialized prompt/messages/params
+  google.protobuf.Struct response = 4; // serialized response
+  int32 prompt_tokens = 5;
+  int32 completion_tokens = 6;
+  int32 total_tokens = 7;
+  double temperature = 8;
+  int32 max_tokens = 9;
+  double top_p = 10;
+  double frequency_penalty = 11;
+  double presence_penalty = 12;
+  google.protobuf.Timestamp start_time = 13;
+  google.protobuf.Timestamp end_time = 14;
+  double duration_ms = 15;
+  string finish_reason = 16; // "stop" | "length" | "safety" | etc.
+}
+
+message PolicyDecision {
+  string policy_id = 1;
+  string outcome = 2; // "allow" | "deny" | "review"
+  repeated string rule_ids = 3;
+  string rationale = 4;
+}
+
+message DataAccess {
+  string datasource = 1; // e.g., "vector://products"
+  repeated string document_ids = 2;
+  repeated string chunk_ids = 3;
+  repeated string pii_categories = 4; // e.g., "EMAIL","PHONE"
+}
+
+message RedactionInfo {
+  repeated string fields = 1; // JSON paths e.g., "messages[0].content"
+  string method = 2; // "mask" | "hash" | "drop"
+  string salt_id = 3;
+}
+
+message RetryInfo {
+  int32 attempt = 1; // 1-based
+  string strategy = 2; // "exponential_backoff"
+  int32 backoff_ms = 3;
+}
+
+message PerformanceMetrics {
+  double cpu_percent = 1;
+  double memory_mb = 2;
+  double duration_ms = 3;
+  double throughput = 4;
+  double latency_ms = 5;
+}
+
+message InfrastructureMetrics {
+  string resource_type = 1; // "container","pod","host"
+  google.protobuf.Struct metrics = 2; // numeric map
+  string host = 3;
+  int32 process_id = 4;
+  string thread_id = 5;
+}
+
+message CostDetails {
+  string provider = 1; // "openai","anthropic"
+  string service = 2; // "chat.completions"
+  int32 input_tokens = 3;
+  int32 output_tokens = 4;
+  int32 total_tokens = 5;
+  double input_cost = 6;
+  double output_cost = 7;
+  double total_cost = 8;
+  string currency = 9; // "USD"
+  double input_rate_per_token = 10;
+  double output_rate_per_token = 11;
+}
+
+message AgentHandoff {
+  string from_agent_id = 1;
+  string from_agent_name = 2;
+  string to_agent_id = 3;
+  string to_agent_name = 4;
+  google.protobuf.Struct handoff_data = 5;
+  string reason = 6;
+  string handoff_type = 7; // "sequential", "parallel", "conditional"
+}
+
+message MCPCall {
+  string server_name = 1;
+  string server_url = 2;
+  string operation = 3; // "tools/list", "resources/read", etc.
+  string method = 4; // "GET", "POST", etc.
+  google.protobuf.Struct request = 5;
+  google.protobuf.Struct response = 6;
+  string protocol_version = 7;
+  double execution_time_ms = 8;
+}
+
+message ErrorInfo {
+  string error_message = 1;
+  string error_code = 2;
+  string stack_trace = 3;
+  bool recoverable = 4;
+  string recovery_action = 5;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Core Event
+// ──────────────────────────────────────────────────────────────────────────────
+
+message Event {
+  // Identity & tenancy
+  string event_id = 1;
+  string tenant_id = 2;
+  string project_id = 3;
+
+  // Correlation
+  string session_id = 4;
+  string span_id = 5;
+  string parent_span_id = 6;
+
+  // Classification
+  EventType type = 7;
+  Severity severity = 8;
+  EventStatus status = 9;
+  Author author = 10;
+
+  // Timing & actors
+  google.protobuf.Timestamp timestamp = 11;
+  string agent_id = 12;
+  string agent_name = 13;
+  string invocation_id = 14;
+  string response_id = 15;
+
+  // Flags
+  bool is_partial = 16;
+  bool is_final = 17;
+
+  // Integrity (WORM)
+  string hash_prev = 18; // hex-encoded
+  string content_hash = 19; // hex-encoded
+  string worm_proof_id = 20;
+
+  // Misc
+  string branch = 21;
+  repeated string tags = 22;
+  string trace_id = 23; // Distributed trace identifier
+
+  // Content union (exactly one when applicable)
+  oneof content {
+    MessageContent message = 30;
+    ToolCall tool_call = 31;
+    ToolResponse tool_response = 32;
+    LLMInvocation llm_invocation = 33;
+    PolicyDecision policy = 34;
+    DataAccess data_access = 35;
+    google.protobuf.Struct state_update = 36;
+    ErrorInfo error = 37;
+    AgentHandoff agent_handoff = 38;
+    MCPCall mcp_call = 39;
+  }
+
+  // Cross-cutting optional attachments (may appear with any type)
+  RetryInfo retry = 60;
+  RedactionInfo redaction = 61;
+  repeated string pii_categories = 62;
+
+  PerformanceMetrics performance = 70;
+  InfrastructureMetrics infrastructure = 71;
+  CostDetails cost = 72;
+
+  // Free-form metadata (lightweight)
+  google.protobuf.Struct metadata = 90;
+
+  // Escape hatch for future extensions
+  repeated google.protobuf.Any extensions = 99;
+}
+
+message EventBatch {
+  string batch_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  repeated Event events = 3;
+  google.protobuf.Struct metadata = 4;
+
+  // Aggregates (optional)
+  double total_cost = 10;
+  int32 total_tokens = 11;
+  double total_duration_ms = 12;
+}

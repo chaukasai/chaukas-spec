@@ -1,0 +1,198 @@
+name: Release client & server
+
+on:
+  push:
+    tags: ['v*.*.*']   # tag like v1.2.3 to trigger a release
+  workflow_dispatch:
+
+# Prevent duplicate runs on the same tag
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate code and build packages
+        run: |
+          make gen-all
+          make build-packages
+
+      - name: Verify package contents
+        run: |
+          echo "=== Client Package Contents ==="
+          tar -tf dist/chaukas_spec_client-*.tar.gz | head -20
+          echo "=== Server Package Contents ==="
+          tar -tf dist/chaukas_spec_server-*.tar.gz | head -20
+
+      - name: Test package installations
+        run: |
+          # Test client package
+          CLIENT_WHL=$(ls dist/chaukas_spec_client-*.whl)
+          pip install "$CLIENT_WHL"
+          python -c "
+          from chaukas.spec.client.v1.client_pb2_grpc import ChaukasClientServiceStub
+          from chaukas.spec.common.v1.events_pb2 import EventType
+          print('✅ Client package installs and imports correctly')
+          "
+          pip uninstall -y chaukas-spec-client
+          
+          # Test server package  
+          SERVER_WHL=$(ls dist/chaukas_spec_server-*.whl)
+          pip install "$SERVER_WHL"
+          python -c "
+          from chaukas.spec.server.v1.server_pb2_grpc import ChaukasServerServiceServicer
+          from chaukas.spec.common.v1.events_pb2 import EventType
+          print('✅ Server package installs and imports correctly')
+          "
+          pip uninstall -y chaukas-spec-server
+
+      - name: Build release notes
+        run: |
+          {
+            echo "# Chaukas Spec v${{ steps.version.outputs.VERSION }}"
+            echo
+            echo "## Installation"
+            echo
+            echo "**For Client-side SDK Development:**"
+            echo '```bash'
+            echo "pip install chaukas-spec-client==${{ steps.version.outputs.VERSION }}"
+            echo '```'
+            echo
+            echo "**For Server-side Platform Implementation:**"
+            echo '```bash'
+            echo "pip install chaukas-spec-server==${{ steps.version.outputs.VERSION }}"
+            echo '```'
+            echo
+            echo "**For Go Development:**"
+            echo '```bash'
+            echo "go get github.com/chaukasai/spec@v${{ steps.version.outputs.VERSION }}"
+            echo '```'
+            echo
+            echo "## Changes in ${{ github.ref_name }}"
+            echo
+            if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+              PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null)
+              git log --oneline --pretty=format:"- %s" "${PREV_TAG}"..HEAD || true
+            else
+              echo "- Initial release"
+            fi
+          } > release-notes.md
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}   # e.g., v1.0.1
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body_path: release-notes.md        # <- use the file we just wrote
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+
+      - name: Update Go module
+        run: |
+          # Go modules are automatically published via Git tags
+          # Verify the module can be fetched
+          GOPROXY=direct go list -m github.com/chaukasai/spec@v${{ steps.version.outputs.VERSION }}
+          echo "✅ Go module published successfully"
+
+      - name: Prepare distribution artifacts
+        run: |
+          mkdir -p dist-client dist-server
+          cp dist/chaukas_spec_client-* dist-client/
+          cp dist/chaukas_spec_server-* dist-server/
+
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-client
+          path: dist-client/*
+          retention-days: 7
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-server
+          path: dist-server/*
+          retention-days: 7
+
+  publish-client:
+    name: Publish client to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Must match the environment you configured on PyPI for the client project
+    environment: pypi-client
+    permissions:
+      id-token: write    # REQUIRED for PyPI Trusted Publishing
+      contents: read
+    steps:
+      - name: Download client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-client
+          path: dist-client
+
+      - name: Publish (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-client
+          # skip-existing: true   # uncomment if you prefer not to fail on re-publishing the same version
+
+  publish-server:
+    name: Publish server to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Must match the environment you configured on PyPI for the server project
+    environment: pypi-server
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Download server artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-server
+          path: dist-server
+
+      - name: Publish (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist-server
+          # skip-existing: true

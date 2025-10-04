@@ -1,0 +1,23 @@
+version: v2
+plugins:
+  # Generate Python protobuf models
+  - remote: buf.build/protocolbuffers/python
+    out: .generated/python
+    opt:
+      - pyi_out=.generated/python
+      
+  # Generate Python gRPC stubs
+  - remote: buf.build/grpc/python
+    out: .generated/python
+    
+  # Generate Go protobuf models 
+  - remote: buf.build/protocolbuffers/go
+    out: go
+    opt:
+      - paths=source_relative
+      
+  # Generate Go gRPC stubs
+  - remote: buf.build/grpc/go
+    out: go
+    opt:
+      - paths=source_relative
