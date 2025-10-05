@@ -10,14 +10,14 @@ plugins:
   - remote: buf.build/grpc/python
     out: .generated/python
     
-  # Generate Go protobuf models 
+  # Generate Go protobuf models
   - remote: buf.build/protocolbuffers/go
-    out: go
+    out: .
     opt:
       - paths=source_relative
-      
+
   # Generate Go gRPC stubs
   - remote: buf.build/grpc/go
-    out: go
+    out: .
     opt:
       - paths=source_relative

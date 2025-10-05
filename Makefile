@@ -23,15 +23,15 @@ gen-python: clean-python
 # Generate Go code only
 gen-go: clean-go
 	buf generate
-	@echo "✅ Go code generated in go/chaukas/spec/"
+	@echo "✅ Go code generated in chaukas/spec/"
 
 # Clean generated Python files
 clean-python:
 	rm -rf .generated/python
 
-# Clean generated Go files  
+# Clean generated Go files
 clean-go:
-	rm -rf go/chaukas
+	rm -rf chaukas
 
 # Clean all generated files
 clean-all: clean-python clean-go

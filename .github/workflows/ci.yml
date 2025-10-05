@@ -61,7 +61,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-          cache-dependency-path: go/go.sum
+          cache-dependency-path: go.sum
 
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -83,7 +83,6 @@ jobs:
 
       - name: Test Go compilation
         run: |
-          cd go
           go mod download
           go build ./...
           go test ./...

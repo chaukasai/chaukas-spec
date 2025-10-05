@@ -21,7 +21,7 @@ proto/chaukas/spec/
 python-client/           # Client SDK package (chaukas-spec-client)
 python-server/           # Server implementation package (chaukas-spec-server)
 
-go/chaukas/spec/         # Generated Go packages and module
+chaukas/spec/            # Generated Go packages and module
 ├── common/v1/       # Data models
 ├── client/v1/       # Client gRPC stubs
 └── server/v1/       # Server gRPC stubs + server-specific models
