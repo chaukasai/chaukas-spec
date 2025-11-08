@@ -1,0 +1,135 @@
+name: Bug Report
+description: Report a bug with proto definitions, code generation, or packages
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: component
+    attributes:
+      label: Affected Component
+      description: Select all that apply
+      options:
+        - label: Protocol Buffer definitions (`.proto` files)
+        - label: Generated Go code
+        - label: Generated Python code
+        - label: Python client package (`chaukas-spec-client`)
+        - label: Python server package (`chaukas-spec-server`)
+        - label: Build/packaging scripts
+        - label: Documentation
+        - label: Other (please specify in description)
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1.
+        2.
+        3.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code-example
+    attributes:
+      label: Minimal Code Example
+      description: If applicable, provide a minimal code example that reproduces the issue
+      render: python
+      placeholder: |
+        # Python or Go code here
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language/Platform
+      description: Which language/platform is affected?
+      options:
+        - Python
+        - Go
+        - Build/Generation tools
+        - Not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Package/Module Version
+      description: "e.g., chaukas-spec-client 1.0.3 or v1.0.3 for Go"
+      placeholder: "1.0.3"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version (if applicable)
+      description: "e.g., 3.11"
+      placeholder: "3.11"
+
+  - type: input
+    id: go-version
+    attributes:
+      label: Go Version (if applicable)
+      description: "e.g., 1.22"
+      placeholder: "1.22"
+
+  - type: input
+    id: buf-version
+    attributes:
+      label: Buf Version (if applicable)
+      description: "e.g., 1.28.1"
+      placeholder: "1.28.1"
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: "e.g., Ubuntu 22.04, macOS 14, Windows 11"
+      placeholder: "Ubuntu 22.04"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (logs, error messages, etc.)
+      placeholder: Paste logs or error messages here
