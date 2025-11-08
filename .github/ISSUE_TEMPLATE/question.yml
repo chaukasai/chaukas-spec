@@ -1,0 +1,91 @@
+name: Question
+description: Ask a question about using or implementing the Chaukas specification
+title: "[QUESTION] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help! Please provide details below.
+
+  - type: checkboxes
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What is your question about?
+      options:
+        - label: SDK integration (client-side)
+        - label: Server implementation
+        - label: Proto definition interpretation
+        - label: Code generation
+        - label: Package usage
+        - label: Best practices
+        - label: Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Ask your question clearly and concisely
+      placeholder: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to accomplish?
+      description: Provide context about your goal or use case
+      placeholder: I'm trying to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What have you tried so far?
+      description: Tell us what you've already attempted
+      placeholder: I tried...
+
+  - type: textarea
+    id: code-snippet
+    attributes:
+      label: Relevant Code Snippet
+      description: If applicable, provide relevant code
+      render: python
+      placeholder: |
+        # Python or Go code
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      description: Which language are you using?
+      options:
+        - Python
+        - Go
+        - Not applicable
+        - Both
+
+  - type: input
+    id: version
+    attributes:
+      label: Package/Module Version
+      description: Which version are you using?
+      placeholder: "e.g., chaukas-spec-client 1.0.3 or v1.0.3"
+
+  - type: input
+    id: use-case
+    attributes:
+      label: Use Case
+      description: What are you building?
+      placeholder: "e.g., building a custom agent, implementing a server"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Any other information that might help us answer your question
+      placeholder: Any other relevant details

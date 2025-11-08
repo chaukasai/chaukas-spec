@@ -1,0 +1,111 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for the Chaukas specification
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible.
+
+  - type: checkboxes
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature are you proposing?
+      options:
+        - label: New event type
+        - label: New proto message/field
+        - label: New RPC service method
+        - label: Enhancement to existing proto definitions
+        - label: Package/build improvement
+        - label: Documentation enhancement
+        - label: Other (please specify below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What use case does it address?
+      placeholder: 'Currently, there''s no way to track X in agent workflows...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution in detail
+      placeholder: Describe what you want to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: proto-example
+    attributes:
+      label: Proto Definition Example (if applicable)
+      description: If proposing proto changes, provide example definitions
+      render: protobuf
+      placeholder: |
+        message NewMessage {
+          string field_name = 1;
+          // ...
+        }
+
+  - type: textarea
+    id: event-type-details
+    attributes:
+      label: Event Type Details (if applicable)
+      description: If proposing a new event type, provide details
+      placeholder: |
+        - Event type name:
+        - When it should be emitted:
+        - What data it should contain:
+        - How it relates to existing events:
+
+  - type: dropdown
+    id: backward-compatibility
+    attributes:
+      label: Backward Compatibility
+      description: Is this change backward compatible?
+      options:
+        - This is a backward-compatible addition
+        - This is a breaking change (requires version bump)
+        - Not sure / needs discussion
+    validations:
+      required: true
+
+  - type: textarea
+    id: breaking-details
+    attributes:
+      label: Breaking Change Details
+      description: If this is a breaking change, explain what breaks and the migration path
+      placeholder: |
+        **What breaks:**
+
+        **Migration path for existing users:**
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What alternative solutions or features have you considered?
+      placeholder: Describe alternatives and why you prefer your proposed solution
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe a concrete use case or workflow where this feature would be beneficial
+      placeholder: Provide a real-world example
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, examples, or references about the feature request
+      placeholder: Links, screenshots, or other relevant information
