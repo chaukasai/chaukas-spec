@@ -1,10 +1,10 @@
 # Chaukas Specification
 
-Protocol Buffer specifications and generated client libraries for the Chaukas agent audit and explainability platform.
+Canonical proto3 schemas for Chaukas — immutable AI-agent audit events, traces/spans, tool calls, and governance decisions (OTEL-friendly).
 
 ## Overview
 
-Chaukas is an open-core agent audit and explainability SDK and platform. This repository contains:
+Chaukas is the Governance, Compliance, Safety, Trust and Explainability layer for AI agents and applications. This repository defines the source-of-truth Protobuf messages used to capture every event and decision into an append-only, WORM-retained audit trail with deep queryability and OpenTelemetry compatibility. This repository contains:
 
 - **Protocol Buffer definitions** for event schema and gRPC services
 - **Generated Python client libraries** for SDK integration
@@ -18,15 +18,15 @@ proto/chaukas/spec/
 ├── client/v1/       # Client-side gRPC service definitions  
 └── server/v1/       # Server-side gRPC service definitions
 
-python-client/           # Client SDK package (chaukas-spec-client)
-python-server/           # Server implementation package (chaukas-spec-server)
+python-client/       # Client SDK package (chaukas-spec-client)
+python-server/       # Server implementation package (chaukas-spec-server)
 
-chaukas/spec/            # Generated Go packages and module
+chaukas/spec/        # Generated Go packages and module
 ├── common/v1/       # Data models
 ├── client/v1/       # Client gRPC stubs
 └── server/v1/       # Server gRPC stubs + server-specific models
 
-.generated/python/       # Temporary generated Python code (build artifact)
+.generated/python/   # Temporary generated Python code (build artifact)
 ```
 
 ## Installation
