@@ -1,5 +1,12 @@
 # Chaukas Specification
 
+[![PyPI - Client](https://img.shields.io/pypi/v/chaukas-spec-client?label=pypi%20client&color=blue)](https://pypi.org/project/chaukas-spec-client/)
+[![PyPI - Server](https://img.shields.io/pypi/v/chaukas-spec-server?label=pypi%20server&color=green)](https://pypi.org/project/chaukas-spec-server/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Go 1.21+](https://img.shields.io/badge/go-1.21+-00ADD8.svg)](https://go.dev/dl/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/chaukasai/chaukas-spec/workflows/CI/badge.svg)](https://github.com/chaukasai/chaukas-spec/actions)
+
 Canonical proto3 schemas for Chaukas — immutable AI-agent audit events, traces/spans, tool calls, and governance decisions (OTEL-friendly).
 
 ## Overview
