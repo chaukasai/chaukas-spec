@@ -2,7 +2,7 @@
 
 **Protocol buffers and gRPC service definitions for building Chaukas-compatible observability backends**
 
-[![PyPI version](https://badge.fury.io/py/chaukas-spec-server.svg)](https://badge.fury.io/py/chaukas-spec-server)
+[![PyPI version](https://badge.fury.io/py/chaukas-spec-server.svg)](https://pypi.org/project/chaukas-spec-server/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
