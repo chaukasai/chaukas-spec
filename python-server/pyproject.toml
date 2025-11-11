@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chaukas-spec-server"
-version = "1.0.4"
-description = "Server implementation framework for Chaukas agent audit and explainability platform"
+version = "1.0.5"
+description = "Protocol buffers and gRPC service definitions for building Chaukas-compatible observability backends"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [

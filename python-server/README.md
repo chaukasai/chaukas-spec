@@ -1,6 +1,29 @@
-# Chaukas Server SDK
+# Chaukas Spec Server
 
-Server-side Python framework for implementing the Chaukas agent audit and explainability platform.
+**Protocol buffers and gRPC service definitions for building Chaukas-compatible observability backends**
+
+[![PyPI version](https://badge.fury.io/py/chaukas-spec-server.svg)](https://pypi.org/project/chaukas-spec-server/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+## What is this?
+
+`chaukas-spec-server` provides the server-side Protocol Buffer definitions and gRPC service interfaces for the [Chaukas](https://github.com/chaukasai/chaukas-spec) agent observability platform. Use this package to:
+
+- **Build observability backends** that comply with the Chaukas specification
+- **Implement gRPC services** for ingesting agent telemetry
+- **Process and store** 19+ standardized event types
+- **Provide analytics** on agent performance and behavior
+- **Enable compliance** with audit trail requirements
+
+## Who should use this?
+
+- **Platform engineers** building observability and monitoring platforms
+- **Backend developers** implementing telemetry collection services
+- **DevOps teams** deploying agent monitoring infrastructure
+- **Security teams** building compliance and audit systems
+
+> **Note:** If you're instrumenting an agent or SDK to send events, use [`chaukas-spec-client`](https://pypi.org/project/chaukas-spec-client/) instead.
 
 ## Installation
 
@@ -10,337 +33,125 @@ pip install chaukas-spec-server
 
 ## Quick Start
 
-### Basic Server Implementation
-
 ```python
-import grpc
 from concurrent import futures
+import grpc
 from chaukas.spec.server.v1.server_pb2_grpc import (
-    ChaukasServerServiceServicer, 
+    ChaukasServerServiceServicer,
     add_ChaukasServerServiceServicer_to_server
 )
-from chaukas.spec.server.v1.server_pb2 import (
-    IngestEventResponse,
-    IngestEventBatchResponse, 
-    GetCapabilitiesResponse,
-    GetEventStatsResponse,
-    HealthzResponse
-)
-from chaukas.spec.common.v1.events_pb2 import EventType
+from chaukas.spec.server.v1.server_pb2 import IngestEventResponse
 
 class MyChaukasServer(ChaukasServerServiceServicer):
-    
-    def Healthz(self, request, context):
-        """Health check endpoint"""
-        return HealthzResponse()
-    
-    def GetCapabilities(self, request, context):
-        """Return server capabilities"""
-        from chaukas.spec.common.v1.query_pb2 import Capabilities
-        
-        capabilities = Capabilities(
-            supports_batch_ingestion=True,
-            supports_event_querying=True,
-            supports_statistics=True,
-            max_batch_size=1000
-        )
-        return GetCapabilitiesResponse(capabilities=capabilities)
-    
     def IngestEvent(self, request, context):
-        """Handle single event ingestion"""
+        # Process the event
         event = request.event
-        
-        # Process the event (your implementation here)
         print(f"Received event: {event.event_id} of type {event.type}")
-        
+
+        # Store in your database, send to analytics, etc.
+        # ...
+
+        # Return response with processing details
         return IngestEventResponse(
             event_id=event.event_id,
             status="accepted",
-            processed_at=int(time.time() * 1000)  # Unix timestamp in ms
-        )
-    
-    def IngestEventBatch(self, request, context):
-        """Handle batch event ingestion"""
-        events = request.event_batch.events
-        accepted_count = 0
-        rejected_event_ids = []
-        
-        for event in events:
-            try:
-                # Process each event (your implementation here)
-                print(f"Processing event: {event.event_id}")
-                accepted_count += 1
-            except Exception as e:
-                print(f"Failed to process {event.event_id}: {e}")
-                rejected_event_ids.append(event.event_id)
-        
-        return IngestEventBatchResponse(
-            batch_id=f"batch_{int(time.time())}",
-            accepted_count=accepted_count,
-            rejected_count=len(rejected_event_ids),
-            rejected_event_ids=rejected_event_ids
-        )
-    
-    def QueryEvents(self, request, context):
-        """Handle event queries"""
-        query = request.query
-        
-        # Implement your query logic here
-        # This is a placeholder response
-        from chaukas.spec.common.v1.query_pb2 import QueryResponse
-        from chaukas.spec.common.v1.events_pb2 import Event
-        
-        # Example: return some events (enhanced with new fields)
-        events = [
-            Event(
-                event_id="evt_example",
-                type=EventType.EVENT_TYPE_SESSION_START,
-                session_id=query.session_id or "default_session",
-                trace_id=query.trace_id or "default_trace"  # New: trace correlation
-            )
-        ]
-        
-        response = QueryResponse(
-            events=events,
-            total_count=len(events),
-            has_more=False
-        )
-        return QueryEventsResponse(response=response)
-    
-    def GetEventStats(self, request, context):
-        """Get event statistics"""
-        # Implement your statistics logic here
-        return GetEventStatsResponse(
-            total_events=1000,
-            total_sessions=50,
-            events_by_type={
-                str(EventType.EVENT_TYPE_SESSION_START): 50,
-                str(EventType.EVENT_TYPE_AGENT_START): 200,
-            },
-            avg_session_duration_ms=30000.0
+            processed_at=int(time.time() * 1000)
         )
 
-### Working with New Event Types
-
-```python
-from chaukas.spec.common.v1.events_pb2 import (
-    Event, EventType, AgentHandoff, MCPCall, ToolCall
-)
-from google.protobuf.struct_pb2 import Struct
-
-def handle_agent_handoff_event(self, event):
-    """Process agent handoff events"""
-    if event.HasField('agent_handoff'):
-        handoff = event.agent_handoff
-        print(f"Agent handoff: {handoff.from_agent_name} -> {handoff.to_agent_name}")
-        print(f"Reason: {handoff.reason}")
-        print(f"Type: {handoff.handoff_type}")
-
-def handle_mcp_call_event(self, event):
-    """Process MCP call events"""
-    if event.HasField('mcp_call'):
-        mcp = event.mcp_call
-        print(f"MCP Call: {mcp.server_name} - {mcp.operation}")
-        print(f"Execution time: {mcp.execution_time_ms}ms")
-
-def create_enhanced_tool_event(self):
-    """Create tool event with enhanced function tracking"""
-    tool_call = ToolCall(
-        id="call_123",
-        name="calculator",
-        function_name="multiply",  # New: granular function tracking
-        auth_required=False
-    )
-    
-    return Event(
-        event_id="evt_tool_456",
-        type=EventType.EVENT_TYPE_TOOL_CALL_START,
-        trace_id="trace_abc123",  # New: distributed tracing
-        tool_call=tool_call
-    )
-
-# Run the server
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    add_ChaukasServerServiceServicer_to_server(MyChaukasServer(), server)
-    
-    listen_addr = '[::]:50051'
-    server.add_insecure_port(listen_addr)
-    
-    print(f"Starting Chaukas server on {listen_addr}")
-    server.start()
-    server.wait_for_termination()
-
-if __name__ == '__main__':
-    import time
-    serve()
+# Start gRPC server
+server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+add_ChaukasServerServiceServicer_to_server(MyChaukasServer(), server)
+server.add_insecure_port('[::]:50051')
+server.start()
+server.wait_for_termination()
 ```
 
-### Event Processing Patterns
+## Server-Specific Features
 
-#### Stream Processing
+The server package includes additional capabilities beyond the client package:
 
+### Enhanced Response Types
+- **IngestEventResponse** - Detailed ingestion status with timestamps
+- **IngestEventBatchResponse** - Batch processing results with accept/reject counts
+- **GetEventStatsResponse** - Analytics and statistics on event data
+
+### Additional RPC Methods
+- **GetEventStats** - Retrieve aggregated statistics by tenant, project, or time range
+
+### Event Analytics
 ```python
-def IngestEventBatch(self, request, context):
-    """Process events in streaming fashion"""
-    for event in request.event_batch.events:
-        # Validate event
-        if not self.validate_event(event):
-            continue
-            
-        # Transform event
-        processed_event = self.transform_event(event)
-        
-        # Store event
-        self.store_event(processed_event)
-        
-        # Trigger real-time processing
-        self.process_event_async(processed_event)
-    
-    return IngestEventBatchResponse(
-        accepted_count=len(request.event_batch.events),
-        rejected_count=0
+def GetEventStats(self, request, context):
+    # Return aggregated metrics
+    return GetEventStatsResponse(
+        total_events=1000,
+        total_sessions=50,
+        events_by_type={
+            "EVENT_TYPE_AGENT_START": 50,
+            "EVENT_TYPE_MODEL_INVOCATION_START": 300,
+        },
+        avg_session_duration_ms=45000.0
     )
 ```
 
-#### Event Validation
+## Event Types
 
-```python
-from chaukas.spec.common.v1.events_pb2 import EventStatus, Severity
+Handle comprehensive event types for complete agent observability:
 
-def validate_event(self, event):
-    """Validate incoming event"""
-    if not event.event_id:
-        return False
-    
-    if not event.tenant_id:
-        return False
-        
-    if event.type == EventType.EVENT_TYPE_UNSPECIFIED:
-        return False
-        
-    return True
+| Category | Event Types |
+|----------|-------------|
+| **Session** | SESSION_START, SESSION_END |
+| **Agent** | AGENT_START, AGENT_END, AGENT_HANDOFF |
+| **Model** | MODEL_INVOCATION_START, MODEL_INVOCATION_END |
+| **Tools** | TOOL_CALL_START, TOOL_CALL_END, MCP_CALL_START, MCP_CALL_END |
+| **I/O** | INPUT_RECEIVED, OUTPUT_EMITTED |
+| **Errors** | ERROR, RETRY |
+| **Extensions** | POLICY_DECISION, DATA_ACCESS, STATE_UPDATE, SYSTEM |
 
-def enrich_event(self, event):
-    """Add server-side metadata"""
-    import time
-    from google.protobuf.timestamp_pb2 import Timestamp
-    
-    # Add server timestamp
-    now = Timestamp()
-    now.GetCurrentTime()
-    event.server_timestamp.CopyFrom(now)
-    
-    # Set processing status
-    event.status = EventStatus.EVENT_STATUS_IN_PROGRESS
-    
-    return event
+## Package Contents
+
+```
+chaukas/spec/
+├── server/v1/       # Server gRPC service interfaces
+│   ├── server_pb2.py
+│   └── server_pb2_grpc.py
+└── common/v1/       # Shared event definitions
+    ├── events_pb2.py
+    └── query_pb2.py
 ```
 
-#### Database Integration Example
+## Architecture Considerations
 
-```python
-import asyncio
-import aiopg
+When building your observability backend:
 
-class AsyncChaukasServer(ChaukasServerServiceServicer):
-    
-    def __init__(self):
-        self.db_pool = None
-    
-    async def init_db(self):
-        """Initialize database connection pool"""
-        self.db_pool = await aiopg.create_pool(
-            "postgresql://user:pass@localhost/chaukas"
-        )
-    
-    def IngestEvent(self, request, context):
-        """Handle single event with async processing"""
-        event = request.event
-        
-        # Run async processing in background
-        asyncio.create_task(self.store_event_async(event))
-        
-        return IngestEventResponse(
-            event_id=event.event_id,
-            status="accepted"
-        )
-    
-    async def store_event_async(self, event):
-        """Store event in database asynchronously"""
-        async with self.db_pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "INSERT INTO events (id, type, data) VALUES (%s, %s, %s)",
-                    (event.event_id, event.type, event.SerializeToString())
-                )
-```
+- **Storage**: Design for high-volume event ingestion (consider time-series databases)
+- **Multi-tenancy**: Use tenant_id and project_id fields for isolation
+- **Analytics**: Pre-aggregate statistics for common queries
+- **Compliance**: Implement WORM (Write-Once-Read-Many) for audit trails
+- **Privacy**: Respect PII categorization and redaction fields
+- **Performance**: Use batch ingestion for high-throughput scenarios
 
-## Available Message Types
+## Documentation
 
-### Core Events
-- `Event` - Core event structure with trace_id for distributed tracing
-- `EventBatch` - Batch of events for bulk processing
-- `EventType` - Comprehensive enumeration including AGENT_HANDOFF, MCP_CALL_START/END
-- `EventStatus` - Event processing status
-- `Severity` - Event severity levels
+- **Full Specification**: [chaukas-spec repository](https://github.com/chaukasai/chaukas-spec)
+- **Protocol Definitions**: [proto/chaukas/spec/](https://github.com/chaukasai/chaukas-spec/tree/main/proto/chaukas/spec)
+- **Architecture**: See [main README](https://github.com/chaukasai/chaukas-spec#architecture)
+- **Examples**: [Usage examples](https://github.com/chaukasai/chaukas-spec#python-usage)
 
-### Enhanced Content Types
-- `MessageContent` - User/agent/system messages
-- `ToolCall` - Tool invocations with enhanced function_name field
-- `ToolResponse` - Tool execution results  
-- `LLMInvocation` - Language model calls
-- `AgentHandoff` - **New**: Agent-to-agent transition tracking
-- `MCPCall` - **New**: Model Context Protocol call details
-- `PolicyDecision` - Policy enforcement results
-- `DataAccess` - Data retrieval operations
-- `ErrorInfo` - Error information and recovery
+## Related Packages
 
-### Server Responses
-- `IngestEventResponse` - Single event ingestion result
-- `IngestEventBatchResponse` - Batch ingestion result with detailed status
-- `GetEventStatsResponse` - Statistics about stored events
+- **[chaukas-spec-client](https://pypi.org/project/chaukas-spec-client/)** - Client-side SDK for sending events
+- **[chaukas-sdk](https://pypi.org/project/chaukas-sdk/)** - One-line instrumentation for popular agent frameworks
 
-### Query Support
-- `QueryRequest` - Event query parameters
-- `QueryFilter` - **Enhanced**: Now includes trace_id filtering
-- `QueryResponse` - Query results with pagination
-- `TimeRange` - Time-based filtering
-- `SortOrder` - Result ordering options
+## Contributing
 
-## Error Handling
-
-```python
-import grpc
-
-def IngestEvent(self, request, context):
-    try:
-        # Process event
-        result = self.process_event(request.event)
-        return IngestEventResponse(event_id=request.event.event_id, status="accepted")
-        
-    except ValidationError as e:
-        context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-        context.set_details(str(e))
-        return IngestEventResponse()
-        
-    except StorageError as e:
-        context.set_code(grpc.StatusCode.INTERNAL)
-        context.set_details("Failed to store event")
-        return IngestEventResponse()
-        
-    except Exception as e:
-        context.set_code(grpc.StatusCode.UNKNOWN)
-        context.set_details("Unexpected error occurred")
-        return IngestEventResponse()
-```
-
-## Development
-
-This package contains generated Protocol Buffer code. For development instructions and to contribute to the specification, see the main repository:
-
-https://github.com/chaukasai/chaukas-spec
+We welcome contributions! Please see our [Contributing Guide](https://github.com/chaukasai/chaukas-spec/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/chaukasai/chaukas-spec/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-Apache License 2.0 - see the main repository for details.
+Apache 2.0 - See [LICENSE](https://github.com/chaukasai/chaukas-spec/blob/main/LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/chaukasai/chaukas-spec/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/chaukasai/chaukas-spec/discussions)
+- **Security**: See [SECURITY.md](https://github.com/chaukasai/chaukas-spec/blob/main/SECURITY.md)
