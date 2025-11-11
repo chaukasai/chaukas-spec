@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Chaukas Spec
-Upstream-Contact: Chaukas AI. <oss@chaukas.ai>
-Source: https://github.com/chaukasai/spec
+Upstream-Contact: Chaukas AI. <2153483+ranesidd@users.noreply.github.com>
+Source: https://github.com/chaukasai/chaukas-spec
 
 # ────────────────────────────────────────────────────────────────────────────
 # Authored source: require headers (or SPDX lines) AND centrally declare license

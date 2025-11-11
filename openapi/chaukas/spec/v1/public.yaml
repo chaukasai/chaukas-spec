@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Chaukas Public API
-  version: 1.0.4
+  version: 1.0.5
 servers:
   - url: https://api.example.com
 paths:

@@ -1,6 +1,28 @@
-# Chaukas Client SDK
+# Chaukas Spec Client
 
-Client-side Python SDK for the Chaukas agent audit and explainability platform.
+**Protocol buffers and gRPC stubs for integrating Chaukas agent observability into your SDKs**
+
+[![PyPI version](https://badge.fury.io/py/chaukas-spec-client.svg)](https://badge.fury.io/py/chaukas-spec-client)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+## What is this?
+
+`chaukas-spec-client` provides the client-side Protocol Buffer definitions and gRPC service stubs for the [Chaukas](https://github.com/chaukasai/chaukas-spec) agent observability platform. Use this package to:
+
+- **Instrument your AI agent SDKs** with standardized event tracking
+- **Send telemetry data** to Chaukas-compatible backends
+- **Track 19+ event types** across agent lifecycles, model invocations, tool calls, and errors
+- **Enable distributed tracing** with full trace context propagation
+- **Ensure compliance** with immutable audit trails
+
+## Who should use this?
+
+- **SDK developers** building agent frameworks who want to add observability
+- **Agent builders** integrating telemetry into custom agents
+- **Platform teams** sending events from client applications to observability backends
+
+> **Note:** If you're implementing an observability backend/platform, use [`chaukas-spec-server`](https://pypi.org/project/chaukas-spec-server/) instead.
 
 ## Installation
 
@@ -10,170 +32,85 @@ pip install chaukas-spec-client
 
 ## Quick Start
 
-### Basic Client Usage
-
 ```python
 import grpc
 from chaukas.spec.client.v1.client_pb2_grpc import ChaukasClientServiceStub
-from chaukas.spec.client.v1.client_pb2 import IngestEventRequest, HealthzRequest
+from chaukas.spec.client.v1.client_pb2 import IngestEventRequest
 from chaukas.spec.common.v1.events_pb2 import Event, EventType
 
-# Create gRPC channel and client
+# Create gRPC channel to your Chaukas backend
 channel = grpc.insecure_channel('localhost:50051')
-client = ChaukasClientServiceStub(channel)
-
-# Health check
-health_request = HealthzRequest()
-health_response = client.Healthz(health_request)
-print("Service is healthy!")
+stub = ChaukasClientServiceStub(channel)
 
 # Create and send an event
 event = Event(
     event_id="evt_123",
     type=EventType.EVENT_TYPE_AGENT_START,
     session_id="session_abc",
-    tenant_id="tenant_123",
-    project_id="project_456"
+    trace_id="trace_xyz"
 )
 
 request = IngestEventRequest(event=event)
-response = client.IngestEvent(request)
-print("Event ingested successfully!")
+response = stub.IngestEvent(request)
 ```
 
-### Available Event Types
+## Event Types
 
-```python
-from chaukas.spec.common.v1.events_pb2 import EventType
+The specification includes comprehensive event types for agent observability:
 
-# Session lifecycle
-EventType.EVENT_TYPE_SESSION_START
-EventType.EVENT_TYPE_SESSION_END
+| Category | Event Types |
+|----------|-------------|
+| **Session** | SESSION_START, SESSION_END |
+| **Agent** | AGENT_START, AGENT_END, AGENT_HANDOFF |
+| **Model** | MODEL_INVOCATION_START, MODEL_INVOCATION_END |
+| **Tools** | TOOL_CALL_START, TOOL_CALL_END, MCP_CALL_START, MCP_CALL_END |
+| **I/O** | INPUT_RECEIVED, OUTPUT_EMITTED |
+| **Errors** | ERROR, RETRY |
+| **Extensions** | POLICY_DECISION, DATA_ACCESS, STATE_UPDATE, SYSTEM |
 
-# Agent spans  
-EventType.EVENT_TYPE_AGENT_START
-EventType.EVENT_TYPE_AGENT_END
-EventType.EVENT_TYPE_AGENT_HANDOFF
+## Features
 
-# LLM/Tool spans
-EventType.EVENT_TYPE_MODEL_INVOCATION_START
-EventType.EVENT_TYPE_MODEL_INVOCATION_END
-EventType.EVENT_TYPE_TOOL_CALL_START
-EventType.EVENT_TYPE_TOOL_CALL_END
+✅ **Standardized Schema** - Protocol Buffer definitions for all event types
+✅ **gRPC Services** - High-performance service stubs for event ingestion
+✅ **Type Safety** - Full type hints and validation
+✅ **Distributed Tracing** - Built-in trace context support
+✅ **Batch Operations** - Efficient batch event ingestion
+✅ **Query Support** - Query events by session, trace, time range, and more
 
-# MCP (Model Context Protocol) spans
-EventType.EVENT_TYPE_MCP_CALL_START
-EventType.EVENT_TYPE_MCP_CALL_END
+## Package Contents
 
-# I/O Events
-EventType.EVENT_TYPE_INPUT_RECEIVED
-EventType.EVENT_TYPE_OUTPUT_EMITTED
-
-# Error handling
-EventType.EVENT_TYPE_ERROR
-EventType.EVENT_TYPE_RETRY
+```
+chaukas/spec/
+├── client/v1/       # Client gRPC service stubs
+│   ├── client_pb2.py
+│   └── client_pb2_grpc.py
+└── common/v1/       # Shared event definitions
+    ├── events_pb2.py
+    └── query_pb2.py
 ```
 
-### Batch Event Ingestion
+## Documentation
 
-```python
-from chaukas.spec.client.v1.client_pb2 import IngestEventBatchRequest
-from chaukas.spec.common.v1.events_pb2 import EventBatch
+- **Full Specification**: [chaukas-spec repository](https://github.com/chaukasai/chaukas-spec)
+- **Protocol Definitions**: [proto/chaukas/spec/](https://github.com/chaukasai/chaukas-spec/tree/main/proto/chaukas/spec)
+- **Architecture**: See [main README](https://github.com/chaukasai/chaukas-spec#architecture)
+- **Examples**: [Usage examples](https://github.com/chaukasai/chaukas-spec#python-usage)
 
-# Create multiple events
-events = [
-    Event(event_id="evt_1", type=EventType.EVENT_TYPE_SESSION_START),
-    Event(event_id="evt_2", type=EventType.EVENT_TYPE_AGENT_START),
-]
+## Related Packages
 
-batch = EventBatch(events=events)
-request = IngestEventBatchRequest(event_batch=batch)
-response = client.IngestEventBatch(request)
-print("Event batch ingested!")
-```
+- **[chaukas-sdk](https://pypi.org/project/chaukas-sdk/)** - One-line instrumentation for popular agent frameworks
+- **[chaukas-spec-server](https://pypi.org/project/chaukas-spec-server/)** - Server-side implementation for building observability backends
 
-### Querying Events
+## Contributing
 
-```python
-from chaukas.spec.client.v1.client_pb2 import QueryEventsRequest
-from chaukas.spec.common.v1.query_pb2 import QueryRequest, QueryFilter, SortOrder
-
-# Query events with enhanced filtering
-filter = QueryFilter(
-    tenant_id="tenant_123",
-    project_id="project_456",
-    trace_id="trace_abc123",  # New: Filter by distributed trace ID
-    session_id="session_abc"
-)
-
-query = QueryRequest(
-    filter=filter,
-    page_size=100,
-    order_by_time=SortOrder.SORT_ORDER_DESC
-)
-
-request = QueryEventsRequest(query=query)
-response = client.QueryEvents(request)
-
-print(f"Found {len(response.response.events)} events")
-for event in response.response.events:
-    print(f"- {event.event_id}: {event.type} (trace: {event.trace_id})")
-```
-
-### Advanced Event Creation with New Fields
-
-```python
-# Create event with distributed tracing
-event = Event(
-    event_id="evt_123",
-    type=EventType.EVENT_TYPE_AGENT_HANDOFF,
-    session_id="session_abc",
-    tenant_id="tenant_123", 
-    project_id="project_456",
-    trace_id="trace_abc123"  # New: Distributed trace correlation
-)
-
-# Enhanced tool call with function name
-from chaukas.spec.common.v1.events_pb2 import ToolCall
-from google.protobuf.struct_pb2 import Struct
-
-tool_call = ToolCall(
-    id="call_123",
-    name="calculator",
-    function_name="multiply",  # New: Specific function within tool
-    arguments=Struct()  # Add your arguments here
-)
-
-tool_event = Event(
-    event_id="evt_tool_456",
-    type=EventType.EVENT_TYPE_TOOL_CALL_START,
-    trace_id="trace_abc123",
-    tool_call=tool_call
-)
-```
-
-## Error Handling
-
-```python
-import grpc
-
-try:
-    response = client.IngestEvent(request)
-except grpc.RpcError as e:
-    if e.code() == grpc.StatusCode.UNAVAILABLE:
-        print("Service unavailable")
-    elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
-        print("Invalid request:", e.details())
-    else:
-        print(f"RPC failed: {e}")
-```
-
-## Development
-
-This package contains generated Protocol Buffer code. For development instructions and to contribute to the specification, see the main repository:
-
-https://github.com/chaukasai/chaukas-spec
+We welcome contributions! Please see our [Contributing Guide](https://github.com/chaukasai/chaukas-spec/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/chaukasai/chaukas-spec/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-Apache License 2.0 - see the main repository for details.
+Apache 2.0 - See [LICENSE](https://github.com/chaukasai/chaukas-spec/blob/main/LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/chaukasai/chaukas-spec/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/chaukasai/chaukas-spec/discussions)
+- **Security**: See [SECURITY.md](https://github.com/chaukasai/chaukas-spec/blob/main/SECURITY.md)
